@@ -33,10 +33,11 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: MarcinChamera/claude-code-action@v1
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          anthropic_base_url: ${{ secrets.ANTHROPIC_BASE_URL }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: '--model MiniMax-M2.1'
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
