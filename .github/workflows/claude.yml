@@ -37,8 +37,6 @@ jobs:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: '--model MiniMax-M2.1'
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
