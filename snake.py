@@ -23,12 +23,17 @@ GLOW_COLOR = (46, 204, 113, 100) # Semi-transparent green
 font_style = pygame.font.SysFont("outfit", 35)
 score_font = pygame.font.SysFont("outfit", 25)
 
-def show_score(score):
+def show_score(score, elapsed_time=0):
     value = score_font.render(f"SCORE: {score}", True, SNAKE_COLOR)
     # Background for score
     score_rect = value.get_rect(topleft=(20, 20))
     pygame.draw.rect(pygame.display.get_surface(), (30, 30, 30), score_rect.inflate(20, 10), border_radius=5)
     pygame.display.get_surface().blit(value, [20, 20])
+
+    # Display timer below score
+    time_value = score_font.render(f"TIME: {elapsed_time}s", True, SNAKE_COLOR)
+    pygame.draw.rect(pygame.display.get_surface(), (30, 30, 30), time_value.get_rect(topleft=(20, 50)).inflate(20, 10), border_radius=5)
+    pygame.display.get_surface().blit(time_value, [20, 50])
 
 def draw_snake(block_size, snake_list):
     for i, x in enumerate(snake_list):
@@ -49,9 +54,9 @@ def message(msg, color, y_displace=0):
 def game_loop():
     display = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('Antigravity Snake')
-    
+
     clock = pygame.time.Clock()
-    
+
     game_over = False
     game_close = False
 
@@ -63,6 +68,9 @@ def game_loop():
 
     snake_list = []
     length_of_snake = 1
+
+    # Track start time for timer
+    start_time = time.time()
 
     # Place food
     foodx = round(random.randrange(40, WIDTH - 40 - BLOCK_SIZE) / 20.0) * 20.0
@@ -77,8 +85,9 @@ def game_loop():
             message("GAME OVER", FOOD_COLOR, -50)
             message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, 10)
             message("Press C-Play Again or Q-Quit", SNAKE_COLOR, 70)
-            
-            show_score(length_of_snake - 1)
+
+            elapsed_time = int(time.time() - start_time)
+            show_score(length_of_snake - 1, elapsed_time)
             pygame.display.update()
 
             for event in pygame.event.get():
@@ -135,7 +144,8 @@ def game_loop():
                 game_close = True
 
         draw_snake(BLOCK_SIZE, snake_list)
-        show_score(length_of_snake - 1)
+        elapsed_time = int(time.time() - start_time)
+        show_score(length_of_snake - 1, elapsed_time)
 
         pygame.display.update()
 
