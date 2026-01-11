@@ -51,9 +51,13 @@ def game_loop():
     pygame.display.set_caption('Antigravity Snake')
     
     clock = pygame.time.Clock()
-    
+
     game_over = False
     game_close = False
+
+    # Timer tracking
+    start_time = time.time()
+    final_time = 0
 
     x1 = WIDTH / 2
     y1 = HEIGHT / 2
@@ -74,9 +78,10 @@ def game_loop():
 
         while game_close:
             display.fill(BG_COLOR)
-            message("GAME OVER", FOOD_COLOR, -50)
-            message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, 10)
-            message("Press C-Play Again or Q-Quit", SNAKE_COLOR, 70)
+            message("GAME OVER", FOOD_COLOR, -70)
+            message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, -10)
+            message(f"Time: {final_time}s", TEXT_COLOR, 30)
+            message("Press C-Play Again or Q-Quit", SNAKE_COLOR, 90)
             
             show_score(length_of_snake - 1)
             pygame.display.update()
@@ -111,6 +116,8 @@ def game_loop():
 
         # Boundary check
         if x1 >= WIDTH or x1 < 0 or y1 >= HEIGHT or y1 < 0:
+            if final_time == 0:
+                final_time = int(time.time() - start_time)
             game_close = True
         
         x1 += x1_change
@@ -132,6 +139,8 @@ def game_loop():
         # Check self-collision
         for x in snake_list[:-1]:
             if x == snake_head:
+                if final_time == 0:
+                    final_time = int(time.time() - start_time)
                 game_close = True
 
         draw_snake(BLOCK_SIZE, snake_list)
