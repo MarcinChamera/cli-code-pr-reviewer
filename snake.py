@@ -225,10 +225,9 @@ def show_score(score, elapsed_time=0, apples_eaten=0):
     bg_rect = bg_surf.get_rect(topleft=(start_x, start_y + row_height * 2 + 10))
     surface.blit(bg_surf, bg_rect)
 
-    # Progress: apples collected out of required (5)
-    required = 5
-    if current_background == BACKGROUND_MANDELBROT:
-        progress_surf = small_font.render(f"{apples_eaten}/{required} apples", True, (150, 150, 150))
+    # Progress: apples collected on Fireworks only
+    if current_background == BACKGROUND_FIREWORKS:
+        progress_surf = small_font.render(f"{apples_eaten} apples", True, (150, 150, 150))
         progress_rect = progress_surf.get_rect(topleft=(start_x, start_y + row_height * 2 + 35))
         surface.blit(progress_surf, progress_rect)
 
