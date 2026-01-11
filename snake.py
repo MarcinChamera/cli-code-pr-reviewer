@@ -1,6 +1,7 @@
 import pygame
 import random
 import time
+import numpy as np
 
 # Initialize Pygame
 pygame.init()
@@ -11,6 +12,14 @@ HEIGHT = 600
 BLOCK_SIZE = 20
 SPEED = 15
 
+# Mandelbrot parameters
+MAX_ITER = 128  # More iterations for better detail
+# Seahorse Valley - known for detailed spiral patterns
+mandelbrot_center_x = -0.747
+mandelbrot_center_y = 0.1
+mandelbrot_zoom = 200.0  # Initial zoom level
+mandelbrot_zoom_speed = 1.003  # Very slow zoom for visible patterns
+
 # Colors (Modern Palette)
 BG_COLOR = (15, 15, 15)  # Dark Gray/Black
 SNAKE_COLOR = (46, 204, 113)  # Emerald Green
@@ -18,6 +27,76 @@ SNAKE_HEAD_COLOR = (39, 174, 96)  # Darker Green
 FOOD_COLOR = (231, 76, 60)  # Alizarin Red
 TEXT_COLOR = (236, 240, 241)  # Clouds/White
 GLOW_COLOR = (46, 204, 113, 100) # Semi-transparent green
+
+# Cache for mandelbrot surface
+mandelbrot_surface = None
+mandelbrot_surface_zoom = 0
+
+# Pre-computed color palette for performance
+COLOR_PALETTE = []
+for i in range(256):
+    t = i / 256.0
+    r = int(9 * (1 - t) * t * t * t * 255)
+    g = int(15 * (1 - t) * (1 - t) * t * t * 255)
+    b = int(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255)
+    COLOR_PALETTE.append((r, g, b))
+
+# Background rendering optimization
+RENDER_SCALE = 2  # Render at 1/2 resolution for better quality
+RENDER_WIDTH = WIDTH // RENDER_SCALE
+RENDER_HEIGHT = HEIGHT // RENDER_SCALE
+
+def render_mandelbrot_background(zoom_level, center_x, center_y):
+    """Render mandelbrot set to a surface with given zoom level."""
+    global MAX_ITER
+
+    # Use lower iteration count for better performance at high zoom
+    effective_max_iter = max(48, int(MAX_ITER - np.log2(zoom_level / 200)))
+
+    y, x = np.ogrid[RENDER_HEIGHT:0:-1, 0:RENDER_WIDTH]
+    scale_factor = zoom_level / RENDER_SCALE
+    x = (x - RENDER_WIDTH / 2) / scale_factor + center_x
+    y = (y - RENDER_HEIGHT / 2) / scale_factor + center_y
+    c = x + 1j * y
+    z = np.zeros_like(c)
+    div_time = np.zeros(z.shape, dtype=np.int32)
+
+    # Vectorized iteration - more efficient
+    for i in range(effective_max_iter):
+        mask = np.abs(z) <= 2
+        if not np.any(mask):
+            div_time[div_time == 0] = effective_max_iter
+            break
+        z[mask] = z[mask] * z[mask] + c[mask]
+        div_time[mask & (np.abs(z) > 2)] = i
+
+    # Create small surface
+    small_surface = pygame.Surface((RENDER_WIDTH, RENDER_HEIGHT))
+
+    # Create RGB array - optimized direct assignment
+    rgb_array = np.zeros((RENDER_WIDTH, RENDER_HEIGHT, 3), dtype=np.uint8)
+
+    # Use numpy advanced indexing for faster colorization
+    normalized = (div_time * 255 // effective_max_iter).clip(0, 255).T  # Transpose for (width, height)
+
+    # Build color lookup
+    palette_array = np.array(COLOR_PALETTE, dtype=np.uint8)
+
+    # Assign colors using advanced indexing
+    for i in range(min(effective_max_iter, len(COLOR_PALETTE))):
+        mask = normalized == i
+        if np.any(mask):
+            rgb_array[mask] = palette_array[i]
+
+    # Handle inside points
+    mask_inside = (div_time >= effective_max_iter).T
+    if np.any(mask_inside):
+        rgb_array[mask_inside] = (0, 0, 0)
+
+    pygame.surfarray.blit_array(small_surface, rgb_array)
+
+    # Scale up to full size
+    return pygame.transform.scale(small_surface, (WIDTH, HEIGHT))
 
 # Font settings
 font_style = pygame.font.SysFont("outfit", 35)
@@ -80,10 +159,26 @@ def game_loop():
 
     current_speed = SPEED
 
+    frame_counter = 0
     while not game_over:
+        frame_counter += 1
+
+        # Update mandelbrot zoom continuously
+        global mandelbrot_zoom, mandelbrot_surface
+        mandelbrot_zoom *= mandelbrot_zoom_speed
+
+        # Reset zoom when it gets too deep
+        if mandelbrot_zoom > 1e10:
+            mandelbrot_zoom = 200.0
+
+        # Only re-render mandelbrot every 4 frames for performance
+        if frame_counter % 4 == 0 or mandelbrot_surface is None:
+            mandelbrot_surface = render_mandelbrot_background(
+                mandelbrot_zoom, mandelbrot_center_x, mandelbrot_center_y
+            )
 
         while game_close:
-            display.fill(BG_COLOR)
+            display.blit(mandelbrot_surface, (0, 0))
             message("GAME OVER", FOOD_COLOR, -50)
             message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, 10)
             message(f"Time: {int(final_time)}s", TEXT_COLOR, 40)
@@ -98,6 +193,8 @@ def game_loop():
                         game_over = True
                         game_close = False
                     if event.key == pygame.K_c:
+                        # Reset mandelbrot zoom
+                        mandelbrot_zoom = 200.0
                         game_loop()
                 if event.type == pygame.QUIT:
                     game_over = True
@@ -124,20 +221,21 @@ def game_loop():
         if x1 >= WIDTH or x1 < 0 or y1 >= HEIGHT or y1 < 0:
             final_time = time.time() - start_time
             game_close = True
-        
+
         x1 += x1_change
         y1 += y1_change
-        
-        display.fill(BG_COLOR)
-        
+
+        # Draw mandelbrot background
+        display.blit(mandelbrot_surface, (0, 0))
+
         # Draw food with a glow/circle effect
         pygame.draw.circle(display, FOOD_COLOR, (int(foodx + BLOCK_SIZE/2), int(foody + BLOCK_SIZE/2)), 8)
-        
+
         snake_head = []
         snake_head.append(x1)
         snake_head.append(y1)
         snake_list.append(snake_head)
-        
+
         if len(snake_list) > length_of_snake:
             del snake_list[0]
 
@@ -150,6 +248,10 @@ def game_loop():
         draw_snake(BLOCK_SIZE, snake_list)
         elapsed_time = time.time() - start_time
         show_score(length_of_snake - 1, elapsed_time)
+
+        # Draw zoom level indicator
+        zoom_text = score_font.render(f"Zoom: {mandelbrot_zoom:.1e}", True, (150, 150, 150))
+        display.blit(zoom_text, (WIDTH - 150, 10))
 
         pygame.display.update()
 
