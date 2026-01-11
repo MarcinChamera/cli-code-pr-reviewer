@@ -340,6 +340,8 @@ def game_loop():
     snake_list = []
     length_of_snake = 1
     apples_eaten = 0
+    fireworks_started = False
+    game_won = False
 
     start_time = time.time()
     final_time = 0
@@ -372,10 +374,17 @@ def game_loop():
                 display.fill((5, 5, 15))
                 fireworks_manager.draw(display)
 
-            message("GAME OVER", FOOD_COLOR, -50)
-            message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, 10)
-            message(f"Time: {int(final_time)}s", TEXT_COLOR, 40)
-            message("Press C-Play Again or Q-Quit", SNAKE_COLOR, 80)
+            if game_won:
+                message("CONGRATULATIONS!", (255, 215, 0), -80)
+                message("You completed both backgrounds!", TEXT_COLOR, -30)
+                message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, 10)
+                message(f"Time: {int(final_time)}s", TEXT_COLOR, 40)
+                message("Press C-Play Again or Q-Quit", SNAKE_COLOR, 80)
+            else:
+                message("GAME OVER", FOOD_COLOR, -50)
+                message(f"Final Score: {length_of_snake - 1}", TEXT_COLOR, 10)
+                message(f"Time: {int(final_time)}s", TEXT_COLOR, 40)
+                message("Press C-Play Again or Q-Quit", SNAKE_COLOR, 80)
 
             show_score(length_of_snake - 1, final_time, apples_eaten)
             draw_roman_border(display)
@@ -456,6 +465,13 @@ def game_loop():
             if apples_eaten >= 5 and current_background == BACKGROUND_MANDELBROT:
                 current_background = BACKGROUND_FIREWORKS
                 fireworks_manager = FireworksManager()
+                fireworks_started = True
+
+            # Check if player completed 5 apples on fireworks (total 10)
+            if fireworks_started and apples_eaten >= 10:
+                game_won = True
+                final_time = time.time() - start_time
+                game_close = True
 
             if length_of_snake % 5 == 0:
                 current_speed += 1
