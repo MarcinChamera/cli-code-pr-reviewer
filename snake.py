@@ -7,12 +7,12 @@ import math
 # Initialize Pygame
 pygame.init()
 
-# Constants
-WIDTH = 800
-HEIGHT = 600
-BLOCK_SIZE = 20
-SPEED = 10
-BORDER_PADDING = 35  # Leave space for decorative border
+# Constants - 50% larger window
+WIDTH = 1200
+HEIGHT = 900
+BLOCK_SIZE = 30  # 50% larger snake
+SPEED = 12  # Slightly faster to compensate for larger size
+BORDER_PADDING = 50  # Leave space for decorative border
 
 # Mandelbrot parameters
 MAX_ITER = 64
@@ -40,8 +40,8 @@ for i in range(256):
     b = int(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255)
     COLOR_PALETTE.append((r, g, b))
 
-# Background rendering optimization
-RENDER_SCALE = 4
+# Background rendering optimization (larger scale for bigger window)
+RENDER_SCALE = 6
 RENDER_WIDTH = WIDTH // RENDER_SCALE
 RENDER_HEIGHT = HEIGHT // RENDER_SCALE
 
@@ -242,7 +242,7 @@ def draw_roman_border(surface):
     rose_red = (180, 40, 60)
     rose_dark = (120, 20, 30)
 
-    border_width = 30
+    border_width = 50  # Thicker border for larger window
 
     # Outer dark brown border
     pygame.draw.rect(surface, dark_brown, (0, 0, WIDTH, HEIGHT), border_width)
@@ -260,23 +260,23 @@ def draw_roman_border(surface):
 
     # Corner ornaments
     def draw_corner_ornament(x, y):
-        pygame.draw.circle(surface, gold, (x, y), 12)
-        pygame.draw.circle(surface, gold_dark, (x, y), 10, 2)
-        pygame.draw.circle(surface, gold_light, (x, y), 6)
+        pygame.draw.circle(surface, gold, (x, y), 18)
+        pygame.draw.circle(surface, gold_dark, (x, y), 15, 2)
+        pygame.draw.circle(surface, gold_light, (x, y), 8)
 
-    draw_corner_ornament(border_width + 15, border_width + 15)
-    draw_corner_ornament(WIDTH - border_width - 15, border_width + 15)
-    draw_corner_ornament(border_width + 15, HEIGHT - border_width - 15)
-    draw_corner_ornament(WIDTH - border_width - 15, HEIGHT - border_width - 15)
+    draw_corner_ornament(border_width + 20, border_width + 20)
+    draw_corner_ornament(WIDTH - border_width - 20, border_width + 20)
+    draw_corner_ornament(border_width + 20, HEIGHT - border_width - 20)
+    draw_corner_ornament(WIDTH - border_width - 20, HEIGHT - border_width - 20)
 
     # Roses at corners
     def draw_rose(x, y, scale=1.0):
-        size = int(8 * scale)
+        size = int(12 * scale)
         pygame.draw.circle(surface, rose_red, (x, y), size)
-        pygame.draw.circle(surface, rose_dark, (x, y), size - 2, 2)
-        pygame.draw.circle(surface, gold_light, (x, y), 2)
+        pygame.draw.circle(surface, rose_dark, (x, y), size - 3, 2)
+        pygame.draw.circle(surface, gold_light, (x, y), 3)
 
-    rose_offset = border_width + 35
+    rose_offset = border_width + 50
     draw_rose(rose_offset, rose_offset, 0.8)
     draw_rose(WIDTH - rose_offset, rose_offset, 0.8)
     draw_rose(rose_offset, HEIGHT - rose_offset, 0.8)
@@ -344,8 +344,8 @@ def game_loop():
     start_time = time.time()
     final_time = 0
 
-    foodx = round(random.randrange(BORDER_PADDING + 20, WIDTH - BORDER_PADDING - 40 - BLOCK_SIZE) / 20.0) * 20.0
-    foody = round(random.randrange(BORDER_PADDING + 20, HEIGHT - BORDER_PADDING - 40 - BLOCK_SIZE) / 20.0) * 20.0
+    foodx = round(random.randrange(BORDER_PADDING + 20, WIDTH - BORDER_PADDING - 40 - BLOCK_SIZE) / BLOCK_SIZE) * BLOCK_SIZE
+    foody = round(random.randrange(BORDER_PADDING + 20, HEIGHT - BORDER_PADDING - 40 - BLOCK_SIZE) / BLOCK_SIZE) * BLOCK_SIZE
 
     current_speed = SPEED
 
@@ -425,7 +425,7 @@ def game_loop():
             fireworks_manager.update()
             fireworks_manager.draw(display)
 
-        pygame.draw.circle(display, FOOD_COLOR, (int(foodx + BLOCK_SIZE/2), int(foody + BLOCK_SIZE/2)), 8)
+        pygame.draw.circle(display, FOOD_COLOR, (int(foodx + BLOCK_SIZE/2), int(foody + BLOCK_SIZE/2)), int(BLOCK_SIZE / 2 - 2))
 
         snake_head = []
         snake_head.append(x1)
@@ -448,8 +448,8 @@ def game_loop():
         pygame.display.update()
 
         if x1 == foodx and y1 == foody:
-            foodx = round(random.randrange(BORDER_PADDING + 20, WIDTH - BORDER_PADDING - 40 - BLOCK_SIZE) / 20.0) * 20.0
-            foody = round(random.randrange(BORDER_PADDING + 20, HEIGHT - BORDER_PADDING - 40 - BLOCK_SIZE) / 20.0) * 20.0
+            foodx = round(random.randrange(BORDER_PADDING + 20, WIDTH - BORDER_PADDING - 40 - BLOCK_SIZE) / BLOCK_SIZE) * BLOCK_SIZE
+            foody = round(random.randrange(BORDER_PADDING + 20, HEIGHT - BORDER_PADDING - 40 - BLOCK_SIZE) / BLOCK_SIZE) * BLOCK_SIZE
             length_of_snake += 1
             apples_eaten += 1
 
